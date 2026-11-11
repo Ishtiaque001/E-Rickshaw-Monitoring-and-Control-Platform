@@ -27,6 +27,45 @@ export class UsersService {
   private readonly auditLogsService: AuditLogsService,
 ) {}
 
+private async updateWithAudit(
+  id: string,
+  changes: Partial<User>,
+  action: AuditAction,
+  actor: AuditActor,
+) {
+  try {
+    return await this.usersRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(User);
+
+      const result = await repository.update(id, changes);
+
+      if (result.affected === 0) {
+        throw new NotFoundException('User not found');
+      }
+
+      const user = await repository.findOneBy({ id });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      await this.auditLogsService.record(
+        {
+          actorId: actor.id,
+          actorRole: actor.role,
+          action,
+          targetType: 'users',
+          targetId: user.id,
+        },
+        manager,
+      );
+
+      return this.toPublicUser(user);
+    });
+  } catch (error) {
+    this.handleDatabaseError(error);
+  }
+}
 async create(dto: CreateUserDto, actor: AuditActor) {
   const name = this.validateName(dto.name);
   const passwordHash = await this.hashPassword(dto.password);
@@ -107,9 +146,7 @@ async create(dto: CreateUserDto, actor: AuditActor) {
     return this.toPublicUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto) {
-    await this.getUserOrFail(id);
-
+  async update(id: string, dto: UpdateUserDto, actor: AuditActor) {
     const changes: Partial<User> = {};
 
     if (dto.name !== undefined) {
@@ -132,47 +169,31 @@ async create(dto: CreateUserDto, actor: AuditActor) {
       throw new BadRequestException('Provide at least one field to update');
     }
 
-    try {
-      const result = await this.usersRepository.update(id, changes);
-
-      if (result.affected === 0) {
-        throw new NotFoundException('User not found');
-      }
-
-      return await this.findOne(id);
-    } catch (error) {
-      this.handleDatabaseError(error);
-    }
+    return this.updateWithAudit(
+      id,
+      changes,
+      AuditAction.USER_UPDATED,
+      actor,
+    );
   }
 
-  async deactivate(id: string) {
-    await this.getUserOrFail(id);
-
-    const result = await this.usersRepository.update(id, {
-      isActive: false,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException('User not found');
-    }
-
-    return this.findOne(id);
-  }
-
-  async activate(id: string) {
-  await this.getUserOrFail(id);
-
-  const result = await this.usersRepository.update(id, {
-    isActive: true,
-  });
-
-  if (result.affected === 0) {
-    throw new NotFoundException('User not found');
-  }
-
-  return this.findOne(id);
+ async activate(id: string, actor: AuditActor) {
+  return this.updateWithAudit(
+    id,
+    { isActive: true },
+    AuditAction.USER_ACTIVATED,
+    actor,
+  );
 }
 
+async deactivate(id: string, actor: AuditActor) {
+  return this.updateWithAudit(
+    id,
+    { isActive: false },
+    AuditAction.USER_DEACTIVATED,
+    actor,
+  );
+}
   private async getUserOrFail(id: string): Promise<User> {
     const user = await this.usersRepository.findOneBy({ id });
 
