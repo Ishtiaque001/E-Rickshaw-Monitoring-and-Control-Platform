@@ -134,6 +134,20 @@ export class UsersService {
     return this.findOne(id);
   }
 
+  async activate(id: string) {
+  await this.getUserOrFail(id);
+
+  const result = await this.usersRepository.update(id, {
+    isActive: true,
+  });
+
+  if (result.affected === 0) {
+    throw new NotFoundException('User not found');
+  }
+
+  return this.findOne(id);
+}
+
   private async getUserOrFail(id: string): Promise<User> {
     const user = await this.usersRepository.findOneBy({ id });
 
