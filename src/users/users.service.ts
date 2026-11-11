@@ -11,6 +11,14 @@ import { User } from './entities/user.entity.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 
+import { AuditLogsService } from '../audit-logs/audit-logs.service.js';
+import { AuditAction } from '../audit-logs/entities/audit-log.entity.js';
+import { UserRole } from './entities/user.entity.js';
+
+type AuditActor = {
+  id: string;
+  role: UserRole;
+};
 @Injectable()
 export class UsersService {
   constructor(
