@@ -27,25 +27,41 @@ export class UsersService {
   private readonly auditLogsService: AuditLogsService,
 ) {}
 
-  async create(dto: CreateUserDto) {
-    const name = this.validateName(dto.name);
-    const passwordHash = await this.hashPassword(dto.password);
+async create(dto: CreateUserDto, actor: AuditActor) {
+  const name = this.validateName(dto.name);
+  const passwordHash = await this.hashPassword(dto.password);
 
-    const user = this.usersRepository.create({
-      name,
-      email: dto.email.trim().toLowerCase(),
-      passwordHash,
-      role: dto.role,
-      isActive: true,
-    });
+  try {
+    return await this.usersRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(User);
 
-    try {
-      const savedUser = await this.usersRepository.save(user);
+      const user = repository.create({
+        name,
+        email: dto.email.trim().toLowerCase(),
+        passwordHash,
+        role: dto.role,
+        isActive: true,
+      });
+
+      const savedUser = await repository.save(user);
+
+      await this.auditLogsService.record(
+        {
+          actorId: actor.id,
+          actorRole: actor.role,
+          action: AuditAction.USER_CREATED,
+          targetType: 'users',
+          targetId: savedUser.id,
+        },
+        manager,
+      );
+
       return this.toPublicUser(savedUser);
-    } catch (error) {
-      this.handleDatabaseError(error);
-    }
+    });
+  } catch (error) {
+    this.handleDatabaseError(error);
   }
+}
 
   async findAll(page = 1, limit = 10) {
     if (
