@@ -21,10 +21,11 @@ type AuditActor = {
 };
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+ constructor(
+  @InjectRepository(User)
+  private readonly usersRepository: Repository<User>,
+  private readonly auditLogsService: AuditLogsService,
+) {}
 
   async create(dto: CreateUserDto) {
     const name = this.validateName(dto.name);
