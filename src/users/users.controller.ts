@@ -8,15 +8,26 @@ import { Controller,
   Patch,
   Post,
   Query,
+  UseGuards,
+
 } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { UserRole } from './entities/user.entity.js';
+export const ROLES_KEY = 'roles';
+
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);

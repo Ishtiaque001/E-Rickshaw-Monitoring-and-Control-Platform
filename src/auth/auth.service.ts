@@ -32,11 +32,6 @@ export class AuthService {
         .where('user.email = :email', { email })
         .getOne();
 
-      console.log('Login lookup:', {
-        found: Boolean(user),
-        isActive: user?.isActive,
-      });
-
       if (!user || !user.isActive) {
         throw new UnauthorizedException('Invalid email or password');
       }
@@ -45,8 +40,6 @@ export class AuthService {
         login.password,
         user.passwordHash,
       );
-
-      console.log('Password matches:', matchPass);
 
       if (!matchPass) {
         throw new UnauthorizedException('Invalid email or password');
