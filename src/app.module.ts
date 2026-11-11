@@ -28,7 +28,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module.js';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: true,
       }),
     }),
 
