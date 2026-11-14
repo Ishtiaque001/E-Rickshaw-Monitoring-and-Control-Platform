@@ -11,11 +11,14 @@ import { RickshawsModule } from './rickshaws/rickshaws.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { AuditLogsModule } from './audit-logs/audit-logs.module.js';
+import { LicensesModule } from './licenses/licenses.module.js';
+import { VerificationModule } from './verification/verification.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
 
     TypeOrmModule.forRootAsync({
@@ -37,6 +40,8 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module.js';
     AuthModule,
     UsersModule,
     AuditLogsModule,
+    LicensesModule,
+    VerificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
