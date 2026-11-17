@@ -18,7 +18,7 @@ export enum AuditAction {
 @Index('IDX_audit_logs_created_at', ['createdAt'])
 @Index('IDX_audit_logs_actor_created_at', ['actorId', 'createdAt'])
 @Index('IDX_audit_logs_target', ['targetType', 'targetId'])
-export class AuditLog {
+export class AuditLog { 
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
