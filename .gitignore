@@ -6,6 +6,12 @@
 # TypeScript build cache
 *.tsbuildinfo
 
+src/auth/
+src/audit-logs/
+src/users/
+src/owners/
+src/rickshaws/
+
 # Logs
 logs
 *.log

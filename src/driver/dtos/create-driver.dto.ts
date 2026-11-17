@@ -22,7 +22,7 @@ export class CreateDriverDto{
     phone:string;
 
     @IsDateString()
-    dateOfBirtH:string;
+    dateOfBirth:string;
 
     @IsString()
     @IsNotEmpty()

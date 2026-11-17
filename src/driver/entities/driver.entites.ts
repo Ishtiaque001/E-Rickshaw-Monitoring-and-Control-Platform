@@ -1,6 +1,7 @@
 
-import { Entity, PrimaryGeneratedColumn, Column,CreateDateColumn} from 'typeorm';
-
+import { Entity, PrimaryGeneratedColumn, Column,CreateDateColumn,OneToMany} from 'typeorm';
+import { Application } from '../../application/entities/application.entity.js';
+import type { Relation } from 'typeorm';
 @Entity('drivers')
 export class Driver {
     @PrimaryGeneratedColumn()
@@ -18,5 +19,8 @@ export class Driver {
 
     @CreateDateColumn()
     createdAt: Date;
+    @OneToMany(() => Application,(application)=>application.driver)
+    applications:Relation<Application>[];
+
 }
 
