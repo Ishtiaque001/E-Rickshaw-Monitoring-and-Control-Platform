@@ -7,6 +7,7 @@ import { DocumentModule } from './document/document.module.js';
 import{TypeOrmModule} from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { RickshawsModule } from './rickshaws/rickshaws.module.js';
+import { UsersModule } from './users/users.module.js';
 ConfigModule
 @Module({
   imports: [
@@ -28,6 +29,7 @@ ConfigModule
     DriverModule,
     DocumentModule,
     RickshawsModule,
+    UsersModule,
    
   ],
   controllers: [AppController],

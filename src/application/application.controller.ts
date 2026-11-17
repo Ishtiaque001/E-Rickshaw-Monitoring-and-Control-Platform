@@ -27,7 +27,7 @@ import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UserRole } from '../users/entities/user.entity.js';
 
-@Controller('application')
+@Controller('applications')
 @UseGuards(JwtAuthGuard)
 export class ApplicationController {
   constructor(

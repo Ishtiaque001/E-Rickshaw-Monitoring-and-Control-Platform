@@ -5,7 +5,7 @@ import { UpdateDriverDto } from './dtos/update-driver.dto.js';
 import { QueryDriverDto } from './dtos/query-driver.dto.js';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-@Controller('driver')
+@Controller('drivers')
 @UseGuards(JwtAuthGuard)
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
@@ -25,8 +25,14 @@ export class DriverController {
   }
 
   @Put(':id')
-  @Patch(':id')
   update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDriverDto: UpdateDriverDto,
+  ) {
+    return this.driverService.update(id, updateDriverDto);
+  }
+  @Patch(':id')
+  littleupdate(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDriverDto: UpdateDriverDto,
   ) {

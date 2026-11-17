@@ -4,21 +4,14 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
-import {
-  Repository,
-  DataSource,
-} from 'typeorm';
-
+import { Repository, DataSource } from 'typeorm';
 import { Application } from './entities/application.entity.js';
 import { Document } from '../document/entities/document.entity.js';
 import { ApplicationStatus } from './enums/application-status.enum.js';
 import { CreateApplicationDto } from './dtos/create-application.dto.js';
 import { UpdateApplicationDto } from './dtos/update-application.dto.js';
 import { QueryApplicationDto } from './dtos/query-application.dto.js';
-
 import { Driver } from '../driver/entities/driver.entites.js';
 import { User } from '../users/entities/user.entity.js';
 import { Rickshaw } from '../rickshaws/rickshaw.entity.js';
@@ -26,52 +19,24 @@ import { Rickshaw } from '../rickshaws/rickshaw.entity.js';
 @Injectable()
 export class ApplicationService {
   constructor(
-    @InjectRepository(Application)
-    private readonly applicationRepository: Repository<Application>,
-
-    @InjectRepository(Driver)
-    private readonly driverRepository: Repository<Driver>,
-
-    @InjectRepository(Rickshaw)
-    private readonly rickshawRepository: Repository<Rickshaw>,
-
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-
-    @InjectRepository(Document)
-    private readonly documentRepository: Repository<Document>,
-
+    @InjectRepository(Application) private readonly applicationRepository: Repository<Application>,
+    @InjectRepository(Driver) private readonly driverRepository: Repository<Driver>,
+    @InjectRepository(Rickshaw) private readonly rickshawRepository: Repository<Rickshaw>,
+    @InjectRepository(User) private readonly usersRepository: Repository<User>,
+    @InjectRepository(Document) private readonly documentRepository: Repository<Document>,
     private readonly dataSource: DataSource,
   ) {}
 
   // CREATE APPLICATION
-  async create(
-    dto: CreateApplicationDto,
-    submittedById: string,
-  ) {
-    const driver = await this.driverRepository.findOne({
-      where: { id: dto.driverId },
-    });
+  async create(dto: CreateApplicationDto, submittedById: string) {
+    const driver = await this.driverRepository.findOne({ where: { id: dto.driverId } });
+    if (!driver) {throw new NotFoundException('Driver not found');}
 
-    if (!driver) {
-      throw new NotFoundException('Driver not found');
-    }
+    const rickshaw = await this.rickshawRepository.findOne({ where: { id: dto.rickshawId } });
+    if (!rickshaw) {throw new NotFoundException('Rickshaw not found');}
 
-    const rickshaw = await this.rickshawRepository.findOne({
-      where: { id: dto.rickshawId },
-    });
-
-    if (!rickshaw) {
-      throw new NotFoundException('Rickshaw not found');
-    }
-
-    const submitter = await this.usersRepository.findOne({
-      where: { id: submittedById },
-    });
-
-    if (!submitter) {
-      throw new NotFoundException('Submitting user not found');
-    }
+    const submitter = await this.usersRepository.findOne({ where: { id: submittedById } });
+    if (!submitter) {throw new NotFoundException('Submitting user not found');}
 
     const application = this.applicationRepository.create({
       driver,
@@ -82,29 +47,19 @@ export class ApplicationService {
     });
 
     const saved = await this.applicationRepository.save(application);
-
     return this.findOne(saved.id);
   }
 
   // GET ALL APPLICATIONS
   async findAll(query: QueryApplicationDto) {
-    const {
-      status,
-      search,
-      page = 1,
-      limit = 10,
-    } = query;
+    const { status, search, page = 1, limit = 10 } = query;
 
     const qb = this.applicationRepository
       .createQueryBuilder('application')
       .leftJoinAndSelect('application.driver', 'driver')
       .leftJoinAndSelect('application.rickshaw', 'rickshaw');
 
-    if (status) {
-      qb.andWhere('application.status = :status', {
-        status,
-      });
-    }
+    if (status) qb.andWhere('application.status = :status', { status });
 
     if (search) {
       qb.andWhere(
@@ -121,12 +76,7 @@ export class ApplicationService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -134,16 +84,10 @@ export class ApplicationService {
   async findOne(id: number) {
     const application = await this.applicationRepository.findOne({
       where: { id },
-      relations: {
-        driver: true,
-        rickshaw: true,
-      },
+      relations: { driver: true, rickshaw: true },
     });
 
-    if (!application) {
-      throw new NotFoundException('Application not found');
-    }
-
+    if (!application) throw new NotFoundException('Application not found');
     return application;
   }
 
@@ -151,72 +95,41 @@ export class ApplicationService {
   async update(id: number, dto: UpdateApplicationDto) {
     const application = await this.applicationRepository.findOne({
       where: { id },
-      relations: {
-        driver: true,
-        rickshaw: true,
-      },
+      relations: { driver: true, rickshaw: true },
     });
 
-    if (!application) {
-      throw new NotFoundException('Application not found');
-    }
-
+    if (!application) throw new NotFoundException('Application not found');
     if (application.status !== ApplicationStatus.PENDING) {
-      throw new ConflictException(
-        'Only pending applications can be edited',
-      );
+      throw new ConflictException('Only pending applications can be edited');
     }
 
     if (dto.driverId !== undefined) {
-      const driver = await this.driverRepository.findOne({
-        where: { id: dto.driverId },
-      });
-
-      if (!driver) {
-        throw new NotFoundException('Driver not found');
-      }
-
+      const driver = await this.driverRepository.findOne({ where: { id: dto.driverId } });
+      if (!driver) throw new NotFoundException('Driver not found');
       application.driver = driver;
     }
 
     if (dto.rickshawId !== undefined) {
-      const rickshaw = await this.rickshawRepository.findOne({
-        where: { id: dto.rickshawId },
-      });
-
-      if (!rickshaw) {
-        throw new NotFoundException('Rickshaw not found');
-      }
-
+      const rickshaw = await this.rickshawRepository.findOne({ where: { id: dto.rickshawId } });
+      if (!rickshaw) throw new NotFoundException('Rickshaw not found');
       application.rickshaw = rickshaw;
     }
 
     const saved = await this.applicationRepository.save(application);
-
     return this.findOne(saved.id);
   }
 
   // DELETE / CANCEL PENDING APPLICATION
   async remove(id: number) {
-    const application = await this.applicationRepository.findOne({
-      where: { id },
-    });
+    const application = await this.applicationRepository.findOne({ where: { id } });
 
-    if (!application) {
-      throw new NotFoundException('Application not found');
-    }
-
+    if (!application) throw new NotFoundException('Application not found');
     if (application.status !== ApplicationStatus.PENDING) {
-      throw new ConflictException(
-        'Only pending applications can be cancelled',
-      );
+      throw new ConflictException('Only pending applications can be cancelled');
     }
 
     await this.applicationRepository.remove(application);
-
-    return {
-      message: 'Application cancelled successfully',
-    };
+    return { message: 'Application cancelled successfully' };
   }
 
   // ADMIN APPROVAL
@@ -228,49 +141,25 @@ export class ApplicationService {
 
       const application = await appRepo.findOne({
         where: { id },
-        relations: {
-          driver: true,
-          rickshaw: true,
-        },
+        relations: { driver: true, rickshaw: true },
         lock: { mode: 'pessimistic_write' },
       });
 
-      if (!application) {
-        throw new NotFoundException('Application not found');
-      }
-
+      if (!application) throw new NotFoundException('Application not found');
       if (application.status !== ApplicationStatus.PENDING) {
-        throw new ConflictException(
-          'Only pending applications can be approved',
-        );
+        throw new ConflictException('Only pending applications can be approved');
       }
 
-      const reviewer = await userRepo.findOne({
-        where: { id: reviewedById },
-      });
-
-      if (!reviewer) {
-        throw new NotFoundException('Admin user not found');
-      }
+      const reviewer = await userRepo.findOne({ where: { id: reviewedById } });
+      if (!reviewer) throw new NotFoundException('Admin user not found');
 
       if (!application.driver || !application.rickshaw) {
-        throw new BadRequestException(
-          'Application is missing its driver or rickshaw',
-        );
+        throw new BadRequestException('Application is missing its driver or rickshaw');
       }
 
-      // Basic document eligibility rule:
-      // Require at least one supporting document before approval.
-      const documentCount = await docRepo.count({
-        where: {
-          application: { id },
-        },
-      });
-
+      const documentCount = await docRepo.count({ where: { application: { id } } });
       if (documentCount < 1) {
-        throw new BadRequestException(
-          'Upload at least one supporting document before approval',
-        );
+        throw new BadRequestException('Upload at least one supporting document before approval');
       }
 
       application.status = ApplicationStatus.APPROVED;
@@ -284,11 +173,7 @@ export class ApplicationService {
   }
 
   // ADMIN REJECTION
-  async reject(
-    id: number,
-    reviewedById: string,
-    rejectionReason: string,
-  ) {
+  async reject(id: number, reviewedById: string, rejectionReason: string) {
     await this.dataSource.transaction(async (manager) => {
       const appRepo = manager.getRepository(Application);
       const userRepo = manager.getRepository(User);
@@ -298,23 +183,13 @@ export class ApplicationService {
         lock: { mode: 'pessimistic_write' },
       });
 
-      if (!application) {
-        throw new NotFoundException('Application not found');
-      }
-
+      if (!application) throw new NotFoundException('Application not found');
       if (application.status !== ApplicationStatus.PENDING) {
-        throw new ConflictException(
-          'Only pending applications can be rejected',
-        );
+        throw new ConflictException('Only pending applications can be rejected');
       }
 
-      const reviewer = await userRepo.findOne({
-        where: { id: reviewedById },
-      });
-
-      if (!reviewer) {
-        throw new NotFoundException('Admin user not found');
-      }
+      const reviewer = await userRepo.findOne({ where: { id: reviewedById } });
+      if (!reviewer) throw new NotFoundException('Admin user not found');
 
       application.status = ApplicationStatus.REJECTED;
       application.reviewedBy = reviewer;
@@ -326,3 +201,4 @@ export class ApplicationService {
     return this.findOne(id);
   }
 }
+
