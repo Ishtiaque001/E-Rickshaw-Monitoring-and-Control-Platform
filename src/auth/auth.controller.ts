@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
+import { Roles } from './decorators/roles.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { RolesGuard } from './guards/roles.guard.js';
+import { UserRole } from '../users/entities/user.entity.js';
 import type { AuthenticatedRequest } from './guards/jwt-auth.guard.js';
 
 @Controller('auth')
@@ -24,8 +27,9 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  getProfile(@Req() request: AuthenticatedRequest) {
-    return request.user;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OPERATOR, UserRole.VERIFIER)
+  getProfile(@Req() req: AuthenticatedRequest) {
+    return req.user;
   }
 }

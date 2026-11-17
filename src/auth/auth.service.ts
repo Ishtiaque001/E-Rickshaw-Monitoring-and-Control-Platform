@@ -32,37 +32,37 @@ export class AuthService {
         .where('user.email = :email', { email })
         .getOne();
 
-      if (!user || !user.isActive) {
+      if (user && user.isActive) {
+        const matchPass = await bcrypt.compare(
+          login.password,
+          user.passwordHash,
+        );
+
+        if (matchPass) {
+          const payloads = {
+            sub: user.id,
+            role: user.role,
+          };
+
+          const access_token = await this.jwtService.signAsync(payloads);
+
+          return {
+            access_token,
+            token_type: 'Bearer',
+            expires_in: 3600,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            },
+          };
+        } else {
+          throw new UnauthorizedException('Invalid email or password');
+        }
+      } else {
         throw new UnauthorizedException('Invalid email or password');
       }
-
-      const matchPass = await bcrypt.compare(
-        login.password,
-        user.passwordHash,
-      );
-
-      if (!matchPass) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      const payload = {
-        sub: user.id,
-        role: user.role,
-      };
-
-      const access_token = await this.jwtService.signAsync(payload);
-
-      return {
-        access_token,
-        token_type: 'Bearer',
-        expires_in: 3600,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
