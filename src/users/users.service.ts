@@ -1,8 +1,9 @@
-import { Injectable,
-      BadRequestException,
+import {
+  Injectable,
+  BadRequestException,
   ConflictException,
   NotFoundException,
- } from '@nestjs/common';
+} from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
@@ -19,90 +20,64 @@ type AuditActor = {
   id: string;
   role: UserRole;
 };
+
+export type PublicUser = Omit<User, 'passwordHash'>;
+
+export type PaginatedUsers = {
+  data: PublicUser[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
 @Injectable()
 export class UsersService {
- constructor(
-  @InjectRepository(User)
-  private readonly usersRepository: Repository<User>,
-  private readonly auditLogsService: AuditLogsService,
-) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
-private async updateWithAudit(
-  id: string,
-  changes: Partial<User>,
-  action: AuditAction,
-  actor: AuditActor,
-) {
-  try {
-    return await this.usersRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(User);
+  async create(dto: CreateUserDto, actor: AuditActor): Promise<PublicUser> {
+    const name = this.validateName(dto.name);
+    const passwordHash = await this.hashPassword(dto.password);
 
-      const result = await repository.update(id, changes);
+    try {
+      return await this.userRepo.manager.transaction(async (manager) => {
+        const repository = manager.getRepository(User);
 
-      if (result.affected === 0) {
-        throw new NotFoundException('User not found');
-      }
+        const user = repository.create({
+          name,
+          email: dto.email.trim().toLowerCase(),
+          passwordHash,
+          role: dto.role,
+          isActive: true,
+        });
 
-      const user = await repository.findOneBy({ id });
+        const savedUser = await repository.save(user);
 
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
+        await this.auditLogsService.record(
+          {
+            actorId: actor.id,
+            actorRole: actor.role,
+            action: AuditAction.USER_CREATED,
+            targetType: 'users',
+            targetId: savedUser.id,
+          },
+          manager,
+        );
 
-      await this.auditLogsService.record(
-        {
-          actorId: actor.id,
-          actorRole: actor.role,
-          action,
-          targetType: 'users',
-          targetId: user.id,
-        },
-        manager,
-      );
-
-      return this.toPublicUser(user);
-    });
-  } catch (error) {
-    this.handleDatabaseError(error);
-  }
-}
-async create(dto: CreateUserDto, actor: AuditActor) {
-  const name = this.validateName(dto.name);
-  const passwordHash = await this.hashPassword(dto.password);
-
-  try {
-    return await this.usersRepository.manager.transaction(async (manager) => {
-      const repository = manager.getRepository(User);
-
-      const user = repository.create({
-        name,
-        email: dto.email.trim().toLowerCase(),
-        passwordHash,
-        role: dto.role,
-        isActive: true,
+        return this.toPublicUser(savedUser);
       });
-
-      const savedUser = await repository.save(user);
-
-      await this.auditLogsService.record(
-        {
-          actorId: actor.id,
-          actorRole: actor.role,
-          action: AuditAction.USER_CREATED,
-          targetType: 'users',
-          targetId: savedUser.id,
-        },
-        manager,
-      );
-
-      return this.toPublicUser(savedUser);
-    });
-  } catch (error) {
-    this.handleDatabaseError(error);
+    } catch (error) {
+      this.handleDatabaseError(error);
+    }
   }
-}
 
-  async findAll(page = 1, limit = 10) {
+  async findAll(page = 1, limit = 10): Promise<PaginatedUsers> {
     if (
       !Number.isSafeInteger(page) ||
       !Number.isSafeInteger(limit) ||
@@ -121,7 +96,7 @@ async create(dto: CreateUserDto, actor: AuditActor) {
       throw new BadRequestException('Page is too large');
     }
 
-    const [users, total] = await this.usersRepository.findAndCount({
+    const [users, total] = await this.userRepo.findAndCount({
       skip,
       take: limit,
       order: {
@@ -141,12 +116,16 @@ async create(dto: CreateUserDto, actor: AuditActor) {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<PublicUser> {
     const user = await this.getUserOrFail(id);
     return this.toPublicUser(user);
   }
 
-  async update(id: string, dto: UpdateUserDto, actor: AuditActor) {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+    actor: AuditActor,
+  ): Promise<PublicUser> {
     const changes: Partial<User> = {};
 
     if (dto.name !== undefined) {
@@ -169,33 +148,68 @@ async create(dto: CreateUserDto, actor: AuditActor) {
       throw new BadRequestException('Provide at least one field to update');
     }
 
+    return this.updateWithAudit(id, changes, AuditAction.USER_UPDATED, actor);
+  }
+
+  async activate(id: string, actor: AuditActor): Promise<PublicUser> {
     return this.updateWithAudit(
       id,
-      changes,
-      AuditAction.USER_UPDATED,
+      { isActive: true },
+      AuditAction.USER_ACTIVATED,
       actor,
     );
   }
 
- async activate(id: string, actor: AuditActor) {
-  return this.updateWithAudit(
-    id,
-    { isActive: true },
-    AuditAction.USER_ACTIVATED,
-    actor,
-  );
-}
+  async deactivate(id: string, actor: AuditActor): Promise<PublicUser> {
+    return this.updateWithAudit(
+      id,
+      { isActive: false },
+      AuditAction.USER_DEACTIVATED,
+      actor,
+    );
+  }
+  private async updateWithAudit(
+    id: string,
+    changes: Partial<User>,
+    action: AuditAction,
+    actor: AuditActor,
+  ): Promise<PublicUser> {
+    try {
+      return await this.userRepo.manager.transaction(async (manager) => {
+        const repository = manager.getRepository(User);
 
-async deactivate(id: string, actor: AuditActor) {
-  return this.updateWithAudit(
-    id,
-    { isActive: false },
-    AuditAction.USER_DEACTIVATED,
-    actor,
-  );
-}
+        const result = await repository.update(id, changes);
+
+        if (result.affected === 0) {
+          throw new NotFoundException('User not found');
+        }
+
+        const user = await repository.findOneBy({ id });
+
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+
+        await this.auditLogsService.record(
+          {
+            actorId: actor.id,
+            actorRole: actor.role,
+            action,
+            targetType: 'users',
+            targetId: user.id,
+          },
+          manager,
+        );
+
+        return this.toPublicUser(user);
+      });
+    } catch (error) {
+      this.handleDatabaseError(error);
+    }
+  }
+
   private async getUserOrFail(id: string): Promise<User> {
-    const user = await this.usersRepository.findOneBy({ id });
+    const user = await this.userRepo.findOneBy({ id });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -222,7 +236,7 @@ async deactivate(id: string, actor: AuditActor) {
     return bcrypt.hash(password, 12);
   }
 
-  private toPublicUser(user: User) {
+  private toPublicUser(user: User): PublicUser {
     return {
       id: user.id,
       name: user.name,
