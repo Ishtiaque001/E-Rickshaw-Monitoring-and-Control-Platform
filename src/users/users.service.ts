@@ -23,16 +23,6 @@ type AuditActor = {
 
 export type PublicUser = Omit<User, 'passwordHash'>;
 
-export type PaginatedUsers = {
-  data: PublicUser[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-};
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -77,43 +67,15 @@ export class UsersService {
     }
   }
 
-  async findAll(page = 1, limit = 10): Promise<PaginatedUsers> {
-    if (
-      !Number.isSafeInteger(page) ||
-      !Number.isSafeInteger(limit) ||
-      page < 1 ||
-      limit < 1 ||
-      limit > 100
-    ) {
-      throw new BadRequestException(
-        'Page must be a positive integer; limit must be between 1 and 100',
-      );
-    }
-
-    const skip = (page - 1) * limit;
-
-    if (!Number.isSafeInteger(skip)) {
-      throw new BadRequestException('Page is too large');
-    }
-
-    const [users, total] = await this.userRepo.findAndCount({
-      skip,
-      take: limit,
+  async findAll(): Promise<PublicUser[]> {
+    const users = await this.userRepo.find({
       order: {
         createdAt: 'DESC',
         id: 'DESC',
       },
     });
 
-    return {
-      data: users.map((user) => this.toPublicUser(user)),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return users.map((user) => this.toPublicUser(user));
   }
 
   async findOne(id: string): Promise<PublicUser> {
