@@ -10,6 +10,7 @@ import {
 
 import { License } from '../../licenses/entities/license.entity.js';
 import { User } from '../../users/entities/user.entity.js';
+import type { Relation } from 'typeorm';
 
 @Entity('verification_logs')
 export class VerificationLog {
@@ -32,7 +33,7 @@ export class VerificationLog {
     { nullable: false },
   )
   @JoinColumn({ name: 'licenseId' })
-  license: License;
+license: Relation<License>;
 
   @ManyToOne(
     () => User,

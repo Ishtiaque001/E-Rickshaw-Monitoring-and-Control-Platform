@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { License } from './entities/license.entity.js';
-import { Application } from '../applications/entities/application.entity';
+import { Application } from '../application/entities/application.entity.js';
 
 import { LicensesController } from './licenses.controller.js';
 import { LicensesService } from './licenses.service.js';

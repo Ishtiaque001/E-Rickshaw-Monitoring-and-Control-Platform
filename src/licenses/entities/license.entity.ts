@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Application } from '../../applications/entities/application.entity';
+import { Application } from '../../application/entities/application.entity.js';
 import { VerificationLog } from '../../verification/entities/verification-log.entity.js';
 
 export enum LicenseStatus {
@@ -47,11 +47,7 @@ export class License {
   })
   status: LicenseStatus;
 
-  @ManyToOne(
-    () => Application,
-    (application) => application.license,
-    { nullable: false },
-  )
+@ManyToOne(() => Application, { nullable: false })
   @JoinColumn({ name: 'applicationId' })
   application: Application;
 
@@ -67,3 +63,4 @@ export class License {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+

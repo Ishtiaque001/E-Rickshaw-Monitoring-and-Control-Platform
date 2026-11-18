@@ -30,9 +30,7 @@ export class LicensesController {
   issueLicense(
     @Body() dto: CreateLicenseDto,
   ) {
-    return this.licensesService.issueLicense(
-      dto.applicationId,
-    );
+  return this.licensesService.issueLicense(dto);
   }
 
   @Get()
