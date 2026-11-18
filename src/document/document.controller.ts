@@ -12,6 +12,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { diskStorage } from 'multer';
@@ -33,6 +43,22 @@ const allowedTypes: Record<string, string[]> = {
   'image/png': ['.png'],
   'application/pdf': ['.pdf'],
 };
+  @ApiTags('Documents')
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'applicationId',
+    type: Number,
+    example: 1,
+    description: 'Numeric ID of the application',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid application ID or request data.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid token, or inactive account.',
+  })
 
 @Controller('applications/:applicationId/documents')
 @UseGuards(JwtAuthGuard)
@@ -41,8 +67,50 @@ export class DocumentController {
     private readonly documentsService: DocumentService,
   ) {}
 
-  // UPLOAD FILE
   @Post()
+  @ApiOperation({
+  summary: 'Upload a supporting document',
+  description:
+    'Upload a JPG, JPEG, PNG or PDF, up to 2 MB. The application must be pending.',
+})
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  required: true,
+  schema: {
+    type: 'object',
+    required: ['documentType', 'file'],
+    properties: {
+      documentType: {
+        type: 'string',
+        minLength: 2,
+        maxLength: 100,
+        example: 'IDENTITY_DOCUMENT',
+      },
+      file: {
+        type: 'string',
+        format: 'binary',
+        description: 'JPG, JPEG, PNG or PDF file, up to 2 MB',
+      },
+    },
+  },
+})
+@ApiResponse({
+  status: 201,
+  description: 'Document uploaded and its details saved.',
+})
+@ApiResponse({
+  status: 404,
+  description: 'Application not found.',
+})
+@ApiResponse({
+  status: 409,
+  description: 'Documents can only be uploaded to pending applications.',
+})
+@ApiResponse({
+  status: 413,
+  description: 'File size exceeds 2 MB.',
+})
+
   @UseFilters(MulterExceptionFilter)
   @UseInterceptors(
     FileInterceptor('file', {
@@ -112,11 +180,20 @@ export class DocumentController {
     );
   }
 
-  // GET ALL DOCUMENTS FOR AN APPLICATION
   @Get()
+  @ApiOperation({
+  summary: 'List documents for an application',
+})
+@ApiResponse({
+  status: 200,
+  description: 'Returns documents, newest first.',
+})
+@ApiResponse({
+  status: 404,
+  description: 'Application not found.',
+})
   findAll(
-    @Param('applicationId', ParseIntPipe) applicationId: number,
-  ) {
+    @Param('applicationId', ParseIntPipe) applicationId: number,) {
     return this.documentsService.findAll(applicationId);
   }
 }
