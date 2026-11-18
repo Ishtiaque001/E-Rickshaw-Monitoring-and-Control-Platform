@@ -9,6 +9,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('E-Rickshaw Monitoring and Control Platform')
     .setDescription('API documentation for the E-Rickshaw Monitoring and Control Platform')
+      .addBearerAuth()
     .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);

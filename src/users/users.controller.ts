@@ -1,14 +1,11 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,7 +13,6 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -71,42 +67,14 @@ export class UsersController {
 
   @Get()
   @ApiOperation({
-    summary: 'List user accounts with pagination',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    schema: {
-      type: 'integer',
-      minimum: 1,
-      default: 1,
-    },
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    schema: {
-      type: 'integer',
-      minimum: 1,
-      maximum: 100,
-      default: 10,
-    },
+    summary: 'Get all user accounts',
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns user data and pagination metadata.',
+    description: 'Returns all users without password hashes.',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid page or limit.',
-  })
-  findAll(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe)
-    page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe)
-    limit: number,
-  ) {
-    return this.usersService.findAll(page, limit);
+  findAll() {
+    return this.usersService.findAll();
   }
 
   @Get(':id')
