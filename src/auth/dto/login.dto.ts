@@ -17,7 +17,7 @@ export class LoginDto {
     minLength: 8,
     maxLength: 72,
     writeOnly: true,
-    description: 'Your account password; maximum 72 UTF-8 bytes',
+    description: 'Your account password; maximum 72 bytes',
   })
   @IsString()
   @MinLength(8)
