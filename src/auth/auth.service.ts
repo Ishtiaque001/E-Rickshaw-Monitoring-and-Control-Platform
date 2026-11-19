@@ -1,0 +1,74 @@
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { User } from '../users/entities/user.entity.js';
+import { LoginDto } from './dto/login.dto.js';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async login(login: LoginDto) {
+    try {
+      if (Buffer.byteLength(login.password, 'utf8') > 72) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      const email = login.email.trim().toLowerCase();
+
+      const user = await this.usersRepository
+        .createQueryBuilder('user')
+        .addSelect('user.passwordHash')
+        .where('user.email = :email', { email })
+        .getOne();
+
+      if (user && user.isActive) {
+        const matchPass = await bcrypt.compare(
+          login.password,
+          user.passwordHash,
+        );
+
+        if (matchPass) {
+          const payloads = {
+            sub: user.id,
+            role: user.role,
+          };
+
+          const access_token = await this.jwtService.signAsync(payloads);
+
+          return {
+            access_token,
+            token_type: 'Bearer',
+            expires_in: 86400,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            },
+          };
+        } else {
+          throw new UnauthorizedException('Invalid email or password');
+        }
+      } else {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Login failed');
+    }
+  }
+}
