@@ -17,7 +17,8 @@ export class VerificationService {
   constructor(
     @InjectRepository(License)
     private licenseRepository: Repository<License>,
-
+    @InjectRepository(VerificationLog)
+    private verificationLogRepository: Repository<VerificationLog>,
     @InjectRepository(VerificationLog)
     private logRepository: Repository<VerificationLog>,
   ) {}

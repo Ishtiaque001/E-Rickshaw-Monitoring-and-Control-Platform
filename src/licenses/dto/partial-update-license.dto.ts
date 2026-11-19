@@ -1,6 +1,6 @@
+import { PartialType, PickType } from '@nestjs/swagger';
+import { CreateLicenseDto } from './create-license.dto.js';
 
-import { PartialType } from '@nestjs/mapped-types';
-import { UpdateLicenseDto } from './update-license.dto.js';
-
-export class PartialUpdateLicenseDto
-  extends PartialType(UpdateLicenseDto) {}
+export class UpdateLicenseDto extends PartialType(
+  PickType(CreateLicenseDto, ['expiryDate'] as const),
+) {}

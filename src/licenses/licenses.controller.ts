@@ -1,4 +1,3 @@
-
 import {
   Controller,
   Get,
@@ -12,14 +11,21 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-
+import { AuthModule } from '../auth/auth.module.js';
+import {
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { LicensesService } from './licenses.service.js';
 import { CreateLicenseDto } from './dto/create-license.dto.js';
 import { UpdateLicenseDto } from './dto/update-license.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 // Import your team's JWT and role guards here.
-
+@ApiTags('Licenses')
+@ApiBearerAuth()
 @Controller('licenses')
+@UseGuards(JwtAuthGuard)
 export class LicensesController {
 
   constructor(

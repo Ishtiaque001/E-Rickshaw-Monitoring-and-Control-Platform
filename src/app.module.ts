@@ -6,7 +6,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
-// Teammates' modules
 import { OwnersModule } from './owners/owners.module.js';
 import { RickshawsModule } from './rickshaws/rickshaws.module.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -15,7 +14,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module.js';
 import { LicensesModule } from './licenses/licenses.module.js';
 import { VerificationModule } from './verification/verification.module.js';
 
-// Your modules
+
 import { ApplicationModule } from './application/application.module.js';
 import { DriverModule } from './driver/driver.module.js';
 import { DocumentModule } from './document/document.module.js';
@@ -40,8 +39,6 @@ import { DocumentModule } from './document/document.module.js';
         synchronize: true,
       }),
     }),
-
-    // Teammates' modules
     OwnersModule,
     RickshawsModule,
     AuthModule,
@@ -49,11 +46,10 @@ import { DocumentModule } from './document/document.module.js';
     AuditLogsModule,
     LicensesModule,
     VerificationModule,
-
-    // Your modules
     ApplicationModule,
     DriverModule,
     DocumentModule,
+    LicensesModule
   ],
   controllers: [AppController],
   providers: [AppService],

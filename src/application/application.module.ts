@@ -11,13 +11,7 @@ import { Document } from '../document/entities/document.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Application,
-      Driver,
-      Rickshaw,
-      User,
-      Document,
-    ]),
+    TypeOrmModule.forFeature([Application,Driver,Rickshaw,User,Document,]),
     AuthModule,
 
   ],

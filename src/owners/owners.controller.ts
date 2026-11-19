@@ -9,12 +9,14 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { OwnersService } from './owners.service.js';
@@ -22,7 +24,9 @@ import { UpdateOwnerDto } from './dto/update-owner.dto.js';
 import { CreateOwnerDto } from './dto/create-owner.dto.js';
 import { PartialUpdateOwnerDto } from './dto/partial-update-owner.dto.js';
 import { OwnerQueryDto } from './dto/owner-query.dto.js';
-
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @ApiTags('Owners')
 @Controller('owners')
 export class OwnersController {

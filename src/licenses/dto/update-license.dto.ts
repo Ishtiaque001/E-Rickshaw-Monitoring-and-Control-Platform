@@ -1,19 +1,16 @@
-
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
-  IsEnum,
   IsOptional,
 } from 'class-validator';
 
-import { LicenseStatus } from '../entities/license.entity.js';
-
 export class UpdateLicenseDto {
 
+  @ApiPropertyOptional({
+    example: '2028-11-19',
+    description: 'New license expiry date',
+  })
   @IsOptional()
   @IsDateString()
   expiryDate?: string;
-
-  @IsOptional()
-  @IsEnum(LicenseStatus)
-  status?: LicenseStatus;
 }

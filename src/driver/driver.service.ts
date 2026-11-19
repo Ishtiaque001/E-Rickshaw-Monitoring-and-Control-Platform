@@ -10,7 +10,8 @@ import { QueryDriverDto } from './dtos/query-driver.dto.js';
 @Injectable()
 export class DriverService {
     constructor(
-        @InjectRepository(Driver) private readonly driverRepo: Repository<Driver>,){}
+        @InjectRepository(Driver) 
+        private readonly driverRepo: Repository<Driver>,){}
 
 
     async create (driver : CreateDriverDto): Promise<Driver> {
@@ -63,7 +64,7 @@ export class DriverService {
           where: {id:id,},
         });
         if (driver){
-            return driver;
+        return driver;
         }
         else{
            
@@ -94,16 +95,12 @@ export class DriverService {
         }
 
         const res = (await this.driverRepo.update(id,driver)).affected;
-         if (res != null && res > 0) {
+        if (res != null && res > 0) {
         return 'Driver updated successfully';}
         else{
             throw new NotFoundException('Driver not found');
         }
     }
-
-
-
-
 }
 
 
