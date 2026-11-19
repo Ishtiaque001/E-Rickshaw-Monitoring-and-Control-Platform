@@ -70,29 +70,137 @@ The system uses PostgreSQL with TypeORM to manage relational data.
 The main backend modules are organized as follows:
 
 ```text
-src/
-├── owners/
-│   ├── dto/
-│   ├── entities/
-│   ├── owners.controller.ts
-│   ├── owners.service.ts
-│   └── owners.module.ts
+E-Rickshaw-Monitoring-and-Control-Platform/
 │
-├── rickshaws/
-│   ├── dto/
-│   ├── entities/
-│   ├── rickshaws.controller.ts
-│   ├── rickshaws.service.ts
-│   └── rickshaws.module.ts
+├── src/
+│   │
+│   ├── auth/                         # MEMBER 1
+│   │   ├── dto/
+│   │   │   └── login.dto.ts
+│   │   ├── guards/
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── roles.guard.ts
+│   │   ├── strategies/
+│   │   │   └── jwt.strategy.ts
+│   │   ├── decorators/
+│   │   │   └── roles.decorator.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.module.ts
+│   │
+│   ├── users/                        # MEMBER 1
+│   │   ├── dto/
+│   │   │   ├── create-user.dto.ts
+│   │   │   └── update-user.dto.ts
+│   │   ├── entities/
+│   │   │   └── user.entity.ts
+│   │   ├── users.controller.ts
+│   │   ├── users.service.ts
+│   │   └── users.module.ts
+│   │
+│   ├── audit-logs/                   # MEMBER 1
+│   │   ├── dto/
+│   │   │   └── query-audit-log.dto.ts
+│   │   ├── entities/
+│   │   │   └── audit-log.entity.ts
+│   │   ├── audit-logs.controller.ts
+│   │   ├── audit-logs.service.ts
+│   │   └── audit-logs.module.ts
+│   │
+│   ├── owners/                       # MEMBER 2
+│   │   ├── dto/
+│   │   │   ├── create-owner.dto.ts
+│   │   │   └── update-owner.dto.ts
+│   │   ├── entities/
+│   │   │   └── owner.entity.ts
+│   │   ├── owners.controller.ts
+│   │   ├── owners.service.ts
+│   │   └── owners.module.ts
+│   │
+│   ├── rickshaws/                    # MEMBER 2
+│   │   ├── dto/
+│   │   │   ├── create-rickshaw.dto.ts
+│   │   │   └── update-rickshaw.dto.ts
+│   │   ├── entities/
+│   │   │   └── rickshaw.entity.ts
+│   │   ├── rickshaws.controller.ts
+│   │   ├── rickshaws.service.ts
+│   │   └── rickshaws.module.ts
+│   │
+│   ├── drivers/                      # MEMBER 3
+│   │   ├── dto/
+│   │   │   ├── create-driver.dto.ts
+│   │   │   └── update-driver.dto.ts
+│   │   ├── entities/
+│   │   │   └── driver.entity.ts
+│   │   ├── drivers.controller.ts
+│   │   ├── drivers.service.ts
+│   │   └── drivers.module.ts
+│   │
+│   ├── applications/                 # MEMBER 3
+│   │   ├── dto/
+│   │   │   ├── create-application.dto.ts
+│   │   │   └── update-application.dto.ts
+│   │   ├── entities/
+│   │   │   └── application.entity.ts
+│   │   ├── applications.controller.ts
+│   │   ├── applications.service.ts
+│   │   └── applications.module.ts
+│   │
+│   ├── documents/                    # MEMBER 3
+│   │   ├── dto/
+│   │   │   └── upload-document.dto.ts
+│   │   ├── entities/
+│   │   │   └── document.entity.ts
+│   │   ├── documents.controller.ts
+│   │   ├── documents.service.ts
+│   │   └── documents.module.ts
+│   │
+│   ├── licenses/                     # MEMBER 4
+│   │   ├── dto/
+│   │   │   ├── issue-license.dto.ts
+│   │   │   └── update-license.dto.ts
+│   │   ├── entities/
+│   │   │   └── license.entity.ts
+│   │   ├── licenses.controller.ts
+│   │   ├── licenses.service.ts
+│   │   └── licenses.module.ts
+│   │
+│   ├── verification/                 # MEMBER 4
+│   │   ├── dto/
+│   │   │   └── verify-license.dto.ts
+│   │   ├── entities/
+│   │   │   └── verification-log.entity.ts
+│   │   ├── verification.controller.ts
+│   │   ├── verification.service.ts
+│   │   └── verification.module.ts
+│   │
+│   ├── database/                     # SHARED
+│   │   ├── migrations/
+│   │   ├── seeds/
+│   │   └── data-source.ts
+│   │
+│   ├── common/                       # SHARED
+│   │   ├── decorators/
+│   │   ├── filters/
+│   │   ├── guards/
+│   │   └── dto/
+│   │
+│   ├── app.controller.ts
+│   ├── app.service.ts
+│   ├── app.module.ts
+│   └── main.ts
 │
-├── users/
-├── auth/
-├── audit-logs/
-│
-├── app.controller.ts
-├── app.service.ts
-├── app.module.ts
-└── main.ts
+├── test/
+├── uploads/
+├── .env
+├── .env.example
+├── .gitignore
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+├── nest-cli.json
+└── README.md
 ```
 
 ## ⚙️ Installation and Setup
