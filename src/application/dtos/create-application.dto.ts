@@ -13,6 +13,11 @@ export class CreateApplicationDto {
   @IsInt()
   @IsPositive()
   driverId: number;
+  @ApiProperty({
+  example: 1,
+  minimum: 1,
+  description: 'Existing rickshaw ID',
+})
 
   @IsInt()
   @IsPositive()
