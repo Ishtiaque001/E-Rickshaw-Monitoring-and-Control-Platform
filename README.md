@@ -1,4 +1,4 @@
-# 🛺 E-Rickshaw Monitoring and Control Platform
+#  E-Rickshaw Monitoring and Control Platform
 
 A backend-based E-Rickshaw Monitoring and Control Platform developed using **NestJS, TypeScript, PostgreSQL, and TypeORM**.
 
