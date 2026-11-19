@@ -11,7 +11,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module.js';
 import {
   ApiTags,
   ApiBearerAuth,

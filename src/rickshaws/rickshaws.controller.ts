@@ -7,18 +7,24 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  UseGuards
 } from '@nestjs/common';
 
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { RickshawsService } from './rickshaws.service.js';
 import { CreateRickshawDto } from './dto/create-rickshaw.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { AuthModule } from '../auth/auth.module.js';
 
+@UseGuards(JwtAuthGuard)
 @ApiTags('Rickshaws')
+@ApiBearerAuth()
 @Controller('rickshaws')
 export class RickshawsController {
   constructor(
